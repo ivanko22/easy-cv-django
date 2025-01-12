@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from core.models import CV, Employment
+from api.models import CV, Employment
 
 # Serializer for the User model
 class UserSerializer(serializers.ModelSerializer):

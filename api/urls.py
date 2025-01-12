@@ -1,5 +1,5 @@
 from django.urls import path
-from core.views import CVListCreateAPIView, CVDetailAPIView
+from api.views import CVListCreateAPIView, CVDetailAPIView
 
 urlpatterns = [
     path('cvs/', CVListCreateAPIView.as_view(), name='cv-list-create'),

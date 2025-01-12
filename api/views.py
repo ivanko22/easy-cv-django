@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework import status
-from core.models import CV
-from core.serializers import CVSerializer
+from api.models import CV
+from api.serializers import CVSerializer
 
 class CVListCreateAPIView(APIView):
     """API view to list and create CVs."""
