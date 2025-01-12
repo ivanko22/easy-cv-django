@@ -1,0 +1,17 @@
+# Core Django dependencies
+asgiref==3.8.1
+Django==5.1.4
+sqlparse==0.5.3
+
+# Authentication and REST API
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.2.2
+django-cors-headers==4.6.0
+
+# Database
+psycopg2-binary==2.9.10
+
+# Environment variables
+python-decouple==3.8
+
+Pillow==11.1.0
