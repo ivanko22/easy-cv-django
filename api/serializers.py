@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class EmploymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employment
-        fields = '__all__'
+        fields = ['position', 'employer', 'startDate', 'endDate', 'description']
 
 # Serializer for the CV model
 class CVSerializer(serializers.ModelSerializer):

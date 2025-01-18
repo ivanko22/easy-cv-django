@@ -1,12 +1,12 @@
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework import status
 from api.models import CV
-from api.serializers import CVSerializer
+from api.serializers import CVSerializer, EmploymentSerializer
 
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -68,6 +68,27 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": "Invalid token or logout failed"}, status=status.HTTP_400_BAD_REQUEST)
 
+class EmploymentCreateView(APIView):
+    print("EmploymentCreateView")
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+    
+    def post(self, request):
+        print("EmploymentCreateView accessed", request.data)
+
+        data = request.data
+        data['user'] = request.user.id  # Associate job with the current user
+        
+        serializer = EmploymentSerializer(data=data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print("Validation Errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class CVListCreateAPIView(APIView):
     """API view to list and create CVs."""
     permission_classes = [IsAuthenticated]

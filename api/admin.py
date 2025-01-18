@@ -1,3 +1,5 @@
 from django.contrib import admin
-
-# Register your models here.
+from .models import Employment
+@admin.register(Employment)
+class EmploymentAdmin(admin.ModelAdmin):
+    list_display = ('position', 'employer', 'startDate', 'endDate', 'description')
