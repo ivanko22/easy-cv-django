@@ -2,11 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User  # Using Django's default User model
 
 class Employment(models.Model):
-    """Model for employment history."""
     position = models.CharField(max_length=255)
     employer = models.CharField(max_length=255)
-    start_date = models.DateField()
-    end_date = models.DateField(blank=True, null=True)
+    startDate = models.DateField()
+    endDate = models.DateField(blank=True, null=True)
     description = models.TextField()
 
     def __str__(self):
