@@ -69,16 +69,12 @@ class LogoutView(APIView):
             return Response({"error": "Invalid token or logout failed"}, status=status.HTTP_400_BAD_REQUEST)
 
 class EmploymentCreateView(APIView):
-    print("EmploymentCreateView")
-
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
     
     def post(self, request):
-        print("EmploymentCreateView accessed", request.data)
-
         data = request.data
-        data['user'] = request.user.id  # Associate job with the current user
+        data['user'] = request.user.id
         
         serializer = EmploymentSerializer(data=data)
         
