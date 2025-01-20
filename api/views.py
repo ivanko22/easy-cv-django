@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework import status
-from api.models import CV
+from api.models import CV, Employment
 from api.serializers import CVSerializer, EmploymentSerializer
 
 from rest_framework.response import Response
@@ -68,22 +68,50 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": "Invalid token or logout failed"}, status=status.HTTP_400_BAD_REQUEST)
 
-class EmploymentCreateView(APIView):
+class EmploymentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser]
-    
+
+    def get(self, request):
+        jobs = Employment.objects.filter(user=request.user)
+        serializer = EmploymentSerializer(jobs, many=True)
+        return Response(serializer.data, status=200)
+
     def post(self, request):
-        data = request.data
-        data['user'] = request.user.id
-        
-        serializer = EmploymentSerializer(data=data)
-        
+        serializer = EmploymentSerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save(user=request.user)  # Ensure the user is set correctly
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class EmploymentDetailUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def patch(self, request, pk):
+        try:
+            employment = Employment.objects.get(pk=pk, user=request.user)
+        except Employment.DoesNotExist:
+            return Response({"error": "Employment record not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmploymentSerializer(employment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            print("Validation Errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        try:
+            employment = Employment.objects.get(pk=pk, user=request.user)
+        except Employment.DoesNotExist:
+            return Response({"error": "Employment record not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmploymentSerializer(employment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CVListCreateAPIView(APIView):
     """API view to list and create CVs."""
@@ -103,7 +131,6 @@ class CVListCreateAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
 class CVDetailAPIView(RetrieveUpdateDestroyAPIView):
     """API view to retrieve, update, or delete a single CV."""
     queryset = CV.objects.all()
