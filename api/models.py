@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User  # Using Django's default User model
+from django.contrib.auth.models import User
 
 class Employment(models.Model):
     position = models.CharField(max_length=255)
@@ -7,7 +7,8 @@ class Employment(models.Model):
     startDate = models.DateField()
     endDate = models.DateField(blank=True, null=True)
     description = models.TextField()
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="employments")
+    
     def __str__(self):
         return f"{self.position} at {self.employer}"
 
