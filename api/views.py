@@ -81,7 +81,7 @@ class EmploymentListCreateView(APIView):
         serializer = EmploymentSerializer(data=request.data, context={'request': request})
 
         if serializer.is_valid():
-            serializer.save(user=request.user)  # Ensure the user is set correctly
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -112,6 +112,14 @@ class EmploymentDetailUpdateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk):
+        try:
+            employment = Employment.objects.get(pk=pk, user=request.user)
+            employment.delete()
+            return Response({"message": "Employment record deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Employment.DoesNotExist:
+            return Response({"error": "Employment record not found"}, status=status.HTTP_404_NOT_FOUND)
     
 class CVListCreateAPIView(APIView):
     """API view to list and create CVs."""
