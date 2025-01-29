@@ -6,11 +6,12 @@ from api.views import (
     CVDetailAPIView,
     SignUpView,
     LogoutView,
+    SocialCreateAPIView,
 )
 
 urlpatterns = [
     path('cv/', CVListCreateAPIView.as_view(), name='cv-list-create'),
-    path('cv/<int:pk>/', CVDetailAPIView.as_view(), name='cv-detail'),
+    path('socials/', SocialCreateAPIView.as_view(), name='social-list'),
 
     # Employment routes
     path('user/employment', EmploymentListCreateView.as_view(), name='employment-list-create'),

@@ -36,10 +36,24 @@ class Language(models.Model):
     def __str__(self):
         return f"{self.name} ({self.level})"
 
+PREDEFINED_SOCIALS = [
+    {"name": "+ Cell", "link": "+ Cell"},
+    {"name": "+ Portfolio", "link": "+ Portfolio"},
+    {"name": "+ Linkedin", "link": "+ Linkedin"},
+    {"name": "+ Location", "link": "+ Location"},
+    {"name": "+ Github", "link": "+ Github"},
+    {"name": "+ Other", "link": "+ Other"},
+]
+
 class Social(models.Model):
-    """Model for social links associated with the user."""
-    name = models.CharField(max_length=100)
-    link = models.URLField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="socials")
+    name = models.CharField(max_length=100, choices=[(social["name"], social["name"]) for social in PREDEFINED_SOCIALS])
+    link = models.CharField(max_length=255, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "name"], name="unique_user_social_name"),
+        ]
 
     def __str__(self):
         return f"{self.name}: {self.link}"

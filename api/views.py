@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework import status
-from api.models import CV, Employment
-from api.serializers import CVSerializer, EmploymentSerializer
+from api.models import CV, Employment, Social
+from api.serializers import CVSerializer, EmploymentSerializer, SocialSerializer
 
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -14,10 +14,6 @@ from django.contrib.auth.models import User
 class SignUpView(APIView):
     permission_classes = [AllowAny]  # Allow access without authentication
 
-    """
-    Handles user registration without server-side validation,
-    as Vue handles input validation.
-    """
     def post(self, request):
         # Extract data
         first_name = request.data.get("first_name")
@@ -45,14 +41,28 @@ class SignUpView(APIView):
                 first_name=first_name,
                 last_name=last_name
             )
+
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+            access = refresh.access_token
+
+            return Response(
+                {
+                    "message": "User created successfully.",
+                    "tokens": {
+                        "access": str(access),
+                        "refresh": str(refresh),
+                    }
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
         except Exception as e:
             return Response(
                 {"error": f"Failed to create user: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
-
+        
 class LogoutView(APIView):
     permission_classes = [AllowAny]
 
@@ -122,25 +132,83 @@ class EmploymentDetailUpdateView(APIView):
             return Response({"error": "Employment record not found"}, status=status.HTTP_404_NOT_FOUND)
     
 class CVListCreateAPIView(APIView):
-    """API view to list and create CVs."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Only return CVs owned by the logged-in user
-        cvs = CV.objects.filter(user=request.user)
-        serializer = CVSerializer(cvs, many=True)
-        return Response(serializer.data)
+        # Fetch the single CV for the user, or return an empty list if none exist
+        cv = CV.objects.filter(user=request.user).first()
+        if cv:
+            serializer = CVSerializer(cv)
+            return Response(serializer.data)
+        return Response({"message": "No CV found"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request):
-        # Automatically associate the logged-in user with the new CV
-        serializer = CVSerializer(data=request.data)
+        print("Request Data (Post):", request.data)  # Debug request data
+
+        # Ensure that there is only one CV per user
+        CV.objects.filter(user=request.user).delete()
+
+        serializer = CVSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(user=request.user)  # Save with the current user
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            cv = serializer.save()
+            print(f"CV Created: {cv}, Work History: {cv.work_history.all()}")  # Debugging
+            return Response(CVSerializer(cv).data, status=status.HTTP_201_CREATED)
+        
+        print("Errors:", serializer.errors)  # Debugging validation issues
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CVDetailAPIView(RetrieveUpdateDestroyAPIView):
-    """API view to retrieve, update, or delete a single CV."""
-    queryset = CV.objects.all()
-    serializer_class = CVSerializer
     permission_classes = [IsAuthenticated]
+    serializer_class = CVSerializer
+    queryset = CV.objects.all()
+
+    def get_queryset(self):
+        return CV.objects.filter(user=self.request.user)
+
+PREDEFINED_SOCIALS = [
+    {"name": "+ Cell", "link": "+ Cell"},
+    {"name": "+ Portfolio", "link": "+ Portfolio"},
+    {"name": "+ Linkedin", "link": "+ Linkedin"},
+    {"name": "+ Location", "link": "+ Location"},
+    {"name": "+ Github", "link": "+ Github"},
+    {"name": "+ Other", "link": "+ Other"},
+]
+
+class SocialCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Retrieve all predefined socials for the user, initializing them if not already present.
+        """
+        user = request.user
+
+        # Ensure predefined socials exist for the user
+        for social in PREDEFINED_SOCIALS:
+            Social.objects.get_or_create(user=user, name=social["name"], defaults={"link": social["link"]})
+
+        # Retrieve user's socials
+        socials = Social.objects.filter(user=user)
+        serializer = SocialSerializer(socials, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """
+        Update the link for a specific social.
+        """
+        social_name = request.data.get("name")
+        link = request.data.get("link")
+
+        if not social_name or not link:
+            return Response({"error": "Both 'name' and 'link' are required."}, status=400)
+
+        try:
+            # Update the specific social link for the user
+            social = Social.objects.get(user=request.user, name=social_name)
+            social.link = link
+            social.save()
+            serializer = SocialSerializer(social)
+            return Response(serializer.data, status=200)
+        except Social.DoesNotExist:
+            return Response({"error": f"Social with name '{social_name}' not found for the user."}, status=404)
+        
