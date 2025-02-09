@@ -2,10 +2,10 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from api.models import CV, Employment, Social
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email']
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['id', 'username', 'email']
 
 class EmploymentSerializer(serializers.ModelSerializer):
     class Meta:
