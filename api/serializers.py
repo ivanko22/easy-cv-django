@@ -18,11 +18,13 @@ class EmploymentSerializer(serializers.ModelSerializer):
     
 class CVSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
     work_history = EmploymentSerializer(many=True, required=False)
     class Meta:
         model = CV
         fields = [
-            'id', 'user', 'profile_image', 'phone_number', 'job_title', 
+            'id', 'user', 'first_name', 'last_name', 'profile_image', 'phone_number', 'job_title', 
             'job_category', 'overview', 'experience', 'skills', 
             'languages', 'work_history',
         ]

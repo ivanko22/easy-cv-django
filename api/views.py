@@ -143,7 +143,7 @@ class CVListCreateAPIView(APIView):
         return Response({"message": "No CV found"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request):
-        print("Request Data (Post):", request.data)  # Debug request data
+        print("Request Data (Post):", request.data)
 
         # Ensure that there is only one CV per user
         CV.objects.filter(user=request.user).delete()
@@ -187,9 +187,14 @@ class SocialCreateAPIView(APIView):
         for social in PREDEFINED_SOCIALS:
             Social.objects.get_or_create(user=user, name=social["name"], defaults={"link": social["link"]})
 
-        # Retrieve user's socials
-        socials = Social.objects.filter(user=user)
+        # Retrieve user's socials and convert QuerySet to a list
+        socials = list(Social.objects.filter(user=user))
+        
+        # Sort by predefined order
+        name_order = {social["name"]: index for index, social in enumerate(PREDEFINED_SOCIALS)}
+        socials.sort(key=lambda s: name_order.get(s.name, float("inf")))  # Use inf to push unknown names to the end
         serializer = SocialSerializer(socials, many=True)
+        
         return Response(serializer.data)
 
     def post(self, request):
